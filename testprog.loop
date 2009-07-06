@@ -1,0 +1,45 @@
+# A list of examples,
+# maybe in the future available as macros
+# from '#' till end of line is a comment
+
+# r0 = 0:
+# 	LOOP r0 { DEC r0; }
+
+# r0 = n:
+#	r0 = 0;
+#	INC r0;		\
+#	INC r0; 	|- n times
+#	INC r0; 	/
+
+# r1 = r0:
+# 	r1 = 0;
+#	LOOP r0 { INC r1; }
+
+# r2 = r0 + r1:
+#	r2 = 0;
+#	LOOP r0 { INC r2; }
+#	LOOP r1 { INC r2; }
+
+# r2 = r0 - r1:
+#	r2 = r0;
+#	LOOP r1 { DEC r2; }
+
+# r2 = r0 * r1:
+#	r2 = 0;
+#	LOOP r0 {
+#		LOOP r1 {
+#			INC r2;
+#		}
+#	}
+
+# IF (r0 = 0) { <P1> } else { <P2> }:
+# 	r1 = 1;
+# 	r2 = 1;
+#	LOOP r0 { DEC r1; }
+#	LOOP r1 { 
+#		DEC r2;
+#		<P1>
+#	}
+#	LOOP r2 {
+#		<P2>
+#	}
