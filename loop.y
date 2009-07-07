@@ -29,14 +29,14 @@
 %}
 
 %right	<irrelevant>	SEMICOLON
-%token	<cmd_ptr>	LOOP_STMNT
+%token	<cmd_ptr>		LOOP_STMNT
 %token	<numeric_val>	REGISTER
 %token	<irrelevant>	LBRACE
 %token	<irrelevant>	RBRACE
-%token	<cmd_ptr>	ADD_STMNT
-%token	<cmd_ptr>	SUB_STMNT
+%token	<cmd_ptr>		ADD_STMNT
+%token	<cmd_ptr>		SUB_STMNT
 %token	<numeric_val>	CONSTANT
-%type	<cmd_ptr>	LOOP_PROG
+%type	<cmd_ptr>		LOOP_PROG
 
 %union {
 	int		numeric_val ;
