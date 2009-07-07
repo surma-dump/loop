@@ -100,7 +100,7 @@ MACRODEF:
 ;
 
 REGISTERLIST: 
-	/* empty */ { $$ = &emptylist }
+	/* empty */ { $$ = &empty_list }
 	| REGISTER COMMA REGISTERLIST {
 		$$ = _CALLOC(struct register_list,1) ;
 		$$->reg = $1 ;
@@ -142,7 +142,14 @@ LOOP_PROG:
 		$$ = _CALLOC(struct cmd,1);
 		$$->op = OP_MACRO ;
 		$$->reglist = $3 ;
-		// FIXME
+		struct macro* m = find_macro($1) ;
+		if (m == (struct macro*) 0) {
+			yyerror("Unknown macro name") ;
+			YYERROR ;
+		}
+		if ($3 == emptylist) {
+			    $$->loop = m->macrocode ;
+		}
 	}
 ;
 
@@ -156,6 +163,17 @@ void prepare() {
 
 	regs = _CALLOC(unsigned int,regs_used+1) ;
 	memset (regs, 0, regs_used+1) ;
+}
+
+struct macro* find_macro(const char* name) {
+	struct macro* m = macro_first  ;
+	struct macro* res = (struct macro*) 0;
+	do {
+		if(strcmp (m->name, name) == 0) 
+			res = m ;
+		m = m->next ;
+	} while (m) ;
+	return res ;
 }
 
 void run(struct cmd* p) {
