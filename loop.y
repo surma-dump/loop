@@ -45,6 +45,14 @@
 	unsigned int regs_used ;
 	unsigned int *regs ;
 	extern FILE* yyin ;
+
+
+	void prepare() ;
+	void run(struct cmd*) ;
+	void linkedlist_teardown(struct cmd*) ;
+	void teardown() ;
+	void dump_registers() ;
+	struct macro* find_macr(const char*) ;
 %}
 
 %right	<irrelevant>	SEMICOLON
@@ -142,7 +150,7 @@ LOOP_PROG:
 		$$ = _CALLOC(struct cmd,1);
 		$$->op = OP_MACRO ;
 		$$->reglist = $3 ;
-		struct macro* m = find_macro($1) ;
+		struct macro *m = find_macro($1) ;
 		if (m == (struct macro*) 0) {
 			yyerror("Unknown macro name") ;
 			YYERROR ;
