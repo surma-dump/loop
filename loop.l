@@ -15,8 +15,7 @@ ALPHA		[_a-zA-Z]
 "ADD"		{ return ADD_STMNT; }
 "SUB"		{ return SUB_STMNT; }
 {DIGIT}+	{ yylval.numeric_val = atoi (yytext); return CONSTANT; }
-{ALPHA}{ALPHANUM}*
-		{ yylval.string = yytext; return MACRONAME; }
+{ALPHA}{ALPHANUM}* { yylval.string = yytext; return MACRONAME; }
 "{"		{ return LBRACE; }
 "}"		{ return RBRACE; }
 "("		{ return LPAREN; }
