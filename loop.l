@@ -1,18 +1,17 @@
 %{
-	#include "loop.tab.h"
-	#include <stdio.h>
 	#include <stdlib.h>
+	#include "loop.tab.h"
 %}
+
 %%
 
-"#"[^\n]+\n
-"LOOP"		{ return LOOPT; }
-"r"([0-9])+	{ yylval.reg_num = atoi(yytext+1); return REGISTER; }
-";"		{ return SEMICOLON; }
-"INC"		{ return INC; }
-"DEC"		{ return DEC; }
+"#"[^\n]+\n	/* Comment */
+"LOOP"		{ return LOOP_STMNT; }
+"r"[0-9]+	{ yylval.numeric_val = atoi (yytext + 1); return REGISTER; }
+"ADD"		{ return ADD_STMNT; }
+"SUB"		{ return SUB_STMNT; }
+[0-9]+		{ yylval.numeric_val = atoi (yytext); return CONSTANT; }
 "{"		{ return LBRACE; }
 "}"		{ return RBRACE; }
-.	
-"\n"
-
+";"		{ return SEMICOLON; }
+[ \t\n]		/* Eat up whitespaces */

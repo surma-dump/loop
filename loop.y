@@ -2,89 +2,150 @@
 	#include <stdio.h>
 	#include <stdlib.h>
 	#include <string.h>
-	#include "loop_def.h"
 
-	int reg_used = 0;
-	struct loop_cmd* last ;
-	#define YSSTYPE int	
-	extern FILE* yyin;
+	#define MAX(a,b) ((a>b)?a:b)
+
+	enum {
+		OP_ADD,
+		OP_SUB,
+		OP_LOOP
+	} ;
+
+	struct cmd {
+		int op ;
+		int reg ;
+		union {
+			struct cmd *loop ;
+			unsigned int param ;
+		} ;
+		struct cmd *next ;
+	} ;
+
+	struct cmd *last ;
+	unsigned int regs_used ;
+	unsigned int *regs ;
+	extern FILE* yyin ;
 %}
 
+%right	<irrelevant>	SEMICOLON
+%token	<cmd_ptr>	LOOP_STMNT
+%token	<numeric_val>	REGISTER
+%token	<irrelevant>	LBRACE
+%token	<irrelevant>	RBRACE
+%token	<cmd_ptr>	ADD_STMNT
+%token	<cmd_ptr>	SUB_STMNT
+%token	<numeric_val>	CONSTANT
+%type	<cmd_ptr>	LOOP_PROG
 
 %union {
-	int			reg_num;
-	struct loop_cmd* 	cmd;
-	int			irrev;
+	int		numeric_val ;
+	void		*irrelevant ;
+	struct cmd	*cmd_ptr ;
 }
 
-%token	<reg_num>	REGISTER
-%token	<irrev>		INC DEC
-%token	<irrev>		SEMICOLON
-%token	<irrev>		LBRACE RBRACE
-%token	<irrev>		LOOPT
-%type	<cmd>		LOOP_CMD
-%type	<cmd>		LOOP_CMD_SEQ
-%type	<cmd>		INC_CMD
-%type	<cmd>		DEC_CMD
-%type	<cmd>		LOOP
-
 %%
-LOOP_CMD_SEQ: LOOP_CMD {
-		$1->next = (struct loop_cmd*)0 ;
-		$$ = $1 ;
-	}
-	| LOOP_CMD LOOP_CMD_SEQ {
-		$1->next = $2 ;
-		$$ = $1 ;
-		last = $1;
-	}
-;
 
-LOOP_CMD: INC_CMD		{ $$ = $1 }
-	| DEC_CMD		{ $$ = $1 }
-	| LOOP			{ $$ = $1 } 
-;
 
-INC_CMD: INC REGISTER SEMICOLON { 
-		reg_used = MAX(reg_used, $2); 
-		$$ = (struct loop_cmd*) malloc (sizeof(struct loop_cmd)) ;
-		$$->op = nINC ;
+LOOP_PROG: 
+	ADD_STMNT REGISTER CONSTANT {
+		regs_used = MAX(regs_used, $2) ;
+		$$ = (struct cmd*) malloc (sizeof (struct cmd)) ;
+		$$->op = OP_ADD ;
 		$$->reg = $2 ;
-	}
-;
-
-DEC_CMD: DEC REGISTER SEMICOLON { 
-		reg_used = MAX(reg_used, $2); 
-		$$ = (struct loop_cmd*) malloc (sizeof(struct loop_cmd)) ;
-		$$->op = nDEC ;
+		$$->param = $3 ;
+	} 
+	| SUB_STMNT REGISTER CONSTANT {
+		regs_used = MAX(regs_used, $2) ;
+		$$ = (struct cmd*) malloc (sizeof (struct cmd)) ;
+		$$->op = OP_SUB ;
 		$$->reg = $2 ;
-	}
-;
-
-LOOP: LOOPT REGISTER LBRACE LOOP_CMD_SEQ RBRACE { 
-		reg_used = MAX(reg_used, $2);
-		$$ = (struct loop_cmd*) malloc (sizeof(struct loop_cmd)) ;
-		$$->op = nLOOP ;
+		$$->param = $3 ;
+	} 
+	| LOOP_STMNT REGISTER LBRACE LOOP_PROG RBRACE {
+		regs_used = MAX(regs_used, $2) ;
+		$$ = (struct cmd*) malloc (sizeof (struct cmd)) ;
+		$$->op = OP_LOOP ;
 		$$->reg = $2 ;
 		$$->loop = $4 ;
-	} 
+	}
+	| LOOP_PROG SEMICOLON LOOP_PROG {
+		$1->next = $3 ;
+		$$ = $1 ;
+	}
 ;
 
 %%
 
-yyerror(char* s) {
-	printf ("ERROR: %s\n", s) ;
+yyerror(char *s) {
+	printf("Error: %s",s) ;
 }
-int main(int argc, char** argv) {
+
+void prepare() {
+
+	regs = (unsigned int*) calloc (regs_used, sizeof(unsigned int)) ;
+	memset (regs, 0, regs_used) ;
+}
+
+void run(struct cmd* p) {
+	//struct cmd *p = prog ;
+	int cnt ;
+	do {
+		switch(p->op) {
+			case OP_ADD:
+				regs[p->reg] += p->param ;
+			break;
+			case OP_SUB:
+				if (regs[p->reg] > p->param)
+					regs[p->reg] -= p->param ;
+			break;
+			case OP_LOOP:
+				for (cnt = regs[p->reg] ; cnt > 0 ; cnt--) 
+					run(p->loop) ;
+			break ;
+		}
+		p = p->next ;
+	} while (p) ;
+}
+
+void dump_registers() {
 	int i;
-	argc-- ; argv++ ;
-	if (argc > 0) 
-		yyin = fopen (argv[0],"r") ;
-	else
-		yyin = stdin ;
-	yyparse() ;
-	regs = (unsigned int*) calloc (reg_used, sizeof(unsigned int)) ;
-	run(last) ;
-	for (i = 0; i<=reg_used; i++) 
-		printf ("Register r%02d: %d\n", i, regs[i]) ;
+	for (i = 0 ; i <= regs_used ; i++) 
+		printf("Register[%02d]: %d\n", i, regs[i]) ;
 }
+
+void linkedlist_teardown (struct cmd* p) {
+	struct cmd* cur ;
+	do {
+		
+		cur = p ;
+		p = p->next ;
+
+		if (cur->op == OP_LOOP) 
+			linkedlist_teardown (cur->loop) ;
+
+		free (cur) ;
+	} while (p) ;		
+}
+
+void teardown() {
+	free (regs) ;
+	linkedlist_teardown(last) ;
+}
+
+int main(int argc, char **argv) {
+
+	argc--; argv++;
+	if (argc > 0)
+		yyin = fopen (argv[0],"r") ;
+	else	
+		yyin = stdin ;
+
+	yyparse() ;
+
+	prepare() ;
+	run(last) ;
+	dump_registers() ;
+	//teardown() ;
+	
+}
+
