@@ -19,7 +19,7 @@
 		union {
 			int reg ;
 			struct register_list *reglist ;
-		}
+		} ;
 		union {
 			struct cmd *loop ;
 			unsigned int param ;
@@ -30,14 +30,14 @@
 	struct register_list {
 		int reg ;
 		struct register_list* next;
-	}
+	} ;
 
 	struct macro {
 		char *name ;
 		struct register_list *reglist ;
 		struct cmd *macrocode ;
 		struct macro *next ;
-	}
+	} ;
 
 	struct cmd *cmd_first ;
 	struct macro *macro_first ;
