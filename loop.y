@@ -155,7 +155,7 @@ LOOP_PROG:
 			yyerror("Unknown macro name") ;
 			YYERROR ;
 		}
-		if ($3 == empty_list) {
+		if ($3 == &empty_list) {
 			    $$->loop = m->macrocode ;
 		}
 	}
