@@ -52,7 +52,7 @@
 	void linkedlist_teardown(struct cmd*) ;
 	void teardown() ;
 	void dump_registers() ;
-	struct macro* find_macr(const char*) ;
+	struct macro* find_loop_macro(const char*) ;
 %}
 
 %right	<irrelevant>	SEMICOLON
@@ -150,12 +150,12 @@ LOOP_PROG:
 		$$ = _CALLOC(struct cmd,1);
 		$$->op = OP_MACRO ;
 		$$->reglist = $3 ;
-		struct macro *m = (struct macro*)find_macro($1) ;
+		struct macro *m = find_loop_macro($1) ;
 		if (m == (struct macro*) 0) {
 			yyerror("Unknown macro name") ;
 			YYERROR ;
 		}
-		if ($3 == emptylist) {
+		if ($3 == empty_list) {
 			    $$->loop = m->macrocode ;
 		}
 	}
@@ -173,7 +173,7 @@ void prepare() {
 	memset (regs, 0, regs_used+1) ;
 }
 
-struct macro* find_macro(const char* name) {
+struct macro* find_loop_macro(const char* name) {
 	struct macro* m = macro_first  ;
 	struct macro* res = (struct macro*) 0;
 	do {
