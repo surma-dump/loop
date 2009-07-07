@@ -1,7 +1,9 @@
-ADD r1 5;
-ADD r2 4;
-LOOP r1 {
-	LOOP r2 {
-		ADD r0 1
+# Simple multiplication:
+
+ADD r0 724 ;
+ADD r1 7332 ;
+LOOP r0 {
+	LOOP r1 {
+		ADD r2 1
 	}
 }

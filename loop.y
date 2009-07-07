@@ -21,7 +21,7 @@
 		struct cmd *next ;
 	} ;
 
-	struct cmd *last ;
+	struct cmd *first ;
 	unsigned int regs_used ;
 	unsigned int *regs ;
 	extern FILE* yyin ;
@@ -71,6 +71,7 @@ LOOP_PROG:
 	| LOOP_PROG SEMICOLON LOOP_PROG {
 		$1->next = $3 ;
 		$$ = $1 ;
+		first = $$ ;
 	}
 ;
 
@@ -88,7 +89,7 @@ void prepare() {
 
 void run(struct cmd* p) {
 	//struct cmd *p = prog ;
-	int cnt ;
+	unsigned int cnt ;
 	do {
 		switch(p->op) {
 			case OP_ADD:
@@ -129,7 +130,7 @@ void linkedlist_teardown (struct cmd* p) {
 
 void teardown() {
 	free (regs) ;
-	linkedlist_teardown(last) ;
+	linkedlist_teardown(first) ;
 }
 
 int main(int argc, char **argv) {
@@ -143,9 +144,9 @@ int main(int argc, char **argv) {
 	yyparse() ;
 
 	prepare() ;
-	run(last) ;
+	run(first) ;
 	dump_registers() ;
-	//teardown() ;
+	teardown() ;
 	
 }
 
