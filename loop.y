@@ -53,6 +53,7 @@ LOOP_PROG:
 		$$->op = OP_ADD ;
 		$$->reg = $2 ;
 		$$->param = $3 ;
+		first = $$ ;
 	} 
 	| SUB_STMNT REGISTER CONSTANT {
 		regs_used = MAX(regs_used, $2) ;
@@ -60,6 +61,7 @@ LOOP_PROG:
 		$$->op = OP_SUB ;
 		$$->reg = $2 ;
 		$$->param = $3 ;
+		first = $$ ;
 	} 
 	| LOOP_STMNT REGISTER LBRACE LOOP_PROG RBRACE {
 		regs_used = MAX(regs_used, $2) ;
@@ -67,6 +69,7 @@ LOOP_PROG:
 		$$->op = OP_LOOP ;
 		$$->reg = $2 ;
 		$$->loop = $4 ;
+		first = $$ ;
 	}
 	| LOOP_PROG SEMICOLON LOOP_PROG {
 		$1->next = $3 ;
