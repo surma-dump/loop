@@ -8,7 +8,8 @@
 	enum {
 		OP_ADD,
 		OP_SUB,
-		OP_LOOP
+		OP_LOOP,
+		OP_NOP
 	} ;
 
 	struct cmd {
@@ -47,7 +48,12 @@
 
 
 LOOP_PROG: 
-	ADD_STMNT REGISTER CONSTANT {
+	/* empty */ {
+		$$ = (struct cmd*) malloc (sizeof (struct cmd)) ;
+		$$->op = OP_NOP ;
+		first = $$ ;
+	} 
+	| ADD_STMNT REGISTER CONSTANT {
 		regs_used = MAX(regs_used, $2) ;
 		$$ = (struct cmd*) malloc (sizeof (struct cmd)) ;
 		$$->op = OP_ADD ;
@@ -86,12 +92,11 @@ yyerror(char *s) {
 
 void prepare() {
 
-	regs = (unsigned int*) calloc (regs_used, sizeof(unsigned int)) ;
-	memset (regs, 0, regs_used) ;
+	regs = (unsigned int*) calloc (regs_used+1, sizeof(unsigned int)) ;
+	memset (regs, 0, regs_used+1) ;
 }
 
 void run(struct cmd* p) {
-	//struct cmd *p = prog ;
 	unsigned int cnt ;
 	do {
 		switch(p->op) {
@@ -106,6 +111,8 @@ void run(struct cmd* p) {
 				for (cnt = regs[p->reg] ; cnt > 0 ; cnt--) 
 					run(p->loop) ;
 			break ;
+			case OP_NOP:
+			break;
 		}
 		p = p->next ;
 	} while (p) ;
@@ -150,6 +157,6 @@ int main(int argc, char **argv) {
 	run(first) ;
 	dump_registers() ;
 	teardown() ;
-	
+
 }
 
