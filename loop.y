@@ -138,7 +138,7 @@ LOOP_PROG:
 		$1->next = $3 ;
 		$$ = $1 ;
 	}
-	| MACRONAME LPAREN REGISTER_LIST RPAREN {
+	| MACRONAME LPAREN REGISTERLIST RPAREN {
 		$$ = _CALLOC(struct cmd,1);
 		$$->op = OP_MACRO ;
 		$$->reglist = $3 ;
