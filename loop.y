@@ -4,17 +4,22 @@
 	#include <string.h>
 
 	#define MAX(a,b) ((a>b)?a:b)
+	#define _CALLOC(s,c) (s*)calloc(c,sizeof(s))
 
 	enum {
 		OP_ADD,
 		OP_SUB,
 		OP_LOOP,
-		OP_NOP
+		OP_NOP,
+		OP_MACRO
 	} ;
 
 	struct cmd {
 		int op ;
-		int reg ;
+		union {
+			int reg ;
+			struct register_list *reglist ;
+		}
 		union {
 			struct cmd *loop ;
 			unsigned int param ;
@@ -22,65 +27,122 @@
 		struct cmd *next ;
 	} ;
 
-	struct cmd *first ;
+	struct register_list {
+		int reg ;
+		struct register_list* next;
+	}
+
+	struct macro {
+		char *name ;
+		struct register_list *reglist ;
+		struct cmd *macrocode ;
+		struct macro *next ;
+	}
+
+	struct cmd *cmd_first ;
+	struct macro *macro_first ;
+	struct register_list empty_list ;
 	unsigned int regs_used ;
 	unsigned int *regs ;
 	extern FILE* yyin ;
 %}
 
 %right	<irrelevant>	SEMICOLON
-%token	<cmd_ptr>		LOOP_STMNT
+%right	<irrelevant>	COMMA
+%token	<cmd_ptr>	LOOP_STMNT
 %token	<numeric_val>	REGISTER
+%token	<string>	MACRONAME
 %token	<irrelevant>	LBRACE
 %token	<irrelevant>	RBRACE
-%token	<cmd_ptr>		ADD_STMNT
-%token	<cmd_ptr>		SUB_STMNT
+%token	<irrelevant>	LPAREN
+%token	<irrelevant>	RPAREN
+%token	<cmd_ptr>	ADD_STMNT
+%token	<cmd_ptr>	SUB_STMNT
 %token	<numeric_val>	CONSTANT
-%type	<cmd_ptr>		LOOP_PROG
+%type	<cmd_ptr>	LOOP_PROG
+%type	<reglist_ptr>	REGISTERLIST
+%type	<macro>		MACRODEF
+%type	<macro>		MACRODEFS
 
 %union {
 	int		numeric_val ;
 	void		*irrelevant ;
+	char*		string ;
 	struct cmd	*cmd_ptr ;
+	struct register_list
+			*reglist_ptr ;
+	struct macro	*macro ;
 }
 
 %%
 
+LOOP_FILE:
+	MACRODEFS LOOP_PROG {
+		macro_first = $1 ;
+		cmd_first = $2 ;
+	}
+;
+
+MACRODEFS:
+	/* empty */ { $$ = (struct macro*) 0 ; }
+	| MACRODEF MACRODEFS {
+		$1->next = $2 ;
+		$$ = $1 ;
+	}
+;
+MACRODEF:
+	MACRONAME LPAREN REGISTERLIST RPAREN LBRACE LOOP_PROG RBRACE {
+		$$ = _CALLOC(struct macro,1) ;
+		$$->name = $1 ;
+		$$->reglist = $3 ;
+		$$->macrocode = $6 ;
+	}
+;
+
+REGISTERLIST: 
+	/* empty */ { $$ = &emptylist }
+	| REGISTER COMMA REGISTERLIST {
+		$$ = _CALLOC(struct register_list,1) ;
+		$$->reg = $1 ;
+		$$->next = $3 ;
+	}
+;
 
 LOOP_PROG: 
 	/* empty */ {
-		$$ = (struct cmd*) malloc (sizeof (struct cmd)) ;
+		$$ = _CALLOC(struct cmd,1) ;
 		$$->op = OP_NOP ;
-		first = $$ ;
 	} 
 	| ADD_STMNT REGISTER CONSTANT {
 		regs_used = MAX(regs_used, $2) ;
-		$$ = (struct cmd*) malloc (sizeof (struct cmd)) ;
+		$$ = _CALLOC(struct cmd,1) ;
 		$$->op = OP_ADD ;
 		$$->reg = $2 ;
 		$$->param = $3 ;
-		first = $$ ;
 	} 
 	| SUB_STMNT REGISTER CONSTANT {
 		regs_used = MAX(regs_used, $2) ;
-		$$ = (struct cmd*) malloc (sizeof (struct cmd)) ;
+		$$ = _CALLOC(struct cmd,1) ;
 		$$->op = OP_SUB ;
 		$$->reg = $2 ;
 		$$->param = $3 ;
-		first = $$ ;
 	} 
 	| LOOP_STMNT REGISTER LBRACE LOOP_PROG RBRACE {
 		regs_used = MAX(regs_used, $2) ;
-		$$ = (struct cmd*) malloc (sizeof (struct cmd)) ;
+		$$ = _CALLOC(struct cmd,1) ;
 		$$->op = OP_LOOP ;
 		$$->reg = $2 ;
 		$$->loop = $4 ;
-		first = $$ ;
 	}
 	| LOOP_PROG SEMICOLON LOOP_PROG {
 		$1->next = $3 ;
 		$$ = $1 ;
-		first = $$ ;
+	}
+	| MACRONAME LPAREN REGISTER_LIST RPAREN {
+		$$ = _CALLOC(struct cmd,1);
+		$$->op = OP_MACRO ;
+		$$->reglist = $3 ;
+		// FIXME
 	}
 ;
 
@@ -92,7 +154,7 @@ yyerror(char *s) {
 
 void prepare() {
 
-	regs = (unsigned int*) calloc (regs_used+1, sizeof(unsigned int)) ;
+	regs = _CALLOC(unsigned int,regs_used+1) ;
 	memset (regs, 0, regs_used+1) ;
 }
 
@@ -140,7 +202,7 @@ void linkedlist_teardown (struct cmd* p) {
 
 void teardown() {
 	free (regs) ;
-	linkedlist_teardown(first) ;
+	linkedlist_teardown(cmd_first) ;
 }
 
 int main(int argc, char **argv) {
@@ -154,7 +216,7 @@ int main(int argc, char **argv) {
 	yyparse() ;
 
 	prepare() ;
-	run(first) ;
+	run(cmd_first) ;
 	dump_registers() ;
 	teardown() ;
 
