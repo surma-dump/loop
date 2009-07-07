@@ -75,7 +75,7 @@
 %union {
 	int		numeric_val ;
 	void		*irrelevant ;
-	char*		string ;
+	char		*string ;
 	struct cmd	*cmd_ptr ;
 	struct register_list
 			*reglist_ptr ;
@@ -150,7 +150,7 @@ LOOP_PROG:
 		$$ = _CALLOC(struct cmd,1);
 		$$->op = OP_MACRO ;
 		$$->reglist = $3 ;
-		struct macro *m = find_macro($1) ;
+		struct macro *m = (struct macro*)find_macro($1) ;
 		if (m == (struct macro*) 0) {
 			yyerror("Unknown macro name") ;
 			YYERROR ;
