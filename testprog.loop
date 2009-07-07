@@ -1,6 +1,3 @@
-DOUBLE (r0,r1) {
-	LOOP r0 { SUB r0 1 }
-	LOOP r1 { ADD r0 2 }
-}
+Stupid (r0,r1) { LOOP r1 { ADD r0 2 } }
 
 ADD r1 1
