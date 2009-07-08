@@ -246,10 +246,10 @@ int main(int argc, char **argv) {
 
 	yyparse() ;
 
-	prepare() ;
-	run(cmd_first) ;
-	dump_registers() ;
-	teardown() ;
+//	prepare() ;
+//	run(cmd_first) ;
+//	dump_registers() ;
+//	teardown() ;
 
 }
 
