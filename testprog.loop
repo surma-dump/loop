@@ -1,4 +1,4 @@
 Stupid (r0,r1) { LOOP r1 { ADD r0 2 } }
-BLA (r0) { INC r0 }
-BLUPP () { DEC r1231222 }
+BLA (r0) { ADD r0 1 }
+BLUPP () { SUB r1231222 1 }
 ADD r1 1
