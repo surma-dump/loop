@@ -5,6 +5,7 @@
 
 	#define MAX(a,b) ((a>b)?a:b)
 	#define _CALLOC(s,c) (s*)calloc(c,sizeof(s))
+	#define DEBUG fprintf(stderr,"%d\n",__LINE__)
 
 	enum {
 		OP_ADD,
@@ -23,6 +24,7 @@
 		union {
 			struct cmd *loop ;
 			unsigned int param ;
+			struct macro* macro ;
 		} ;
 		struct cmd *next ;
 	} ;
@@ -39,8 +41,8 @@
 		struct macro *next ;
 	} ;
 
-	struct cmd *cmd_first ;
-	struct macro *macro_first ;
+	struct cmd *cmd_first = (struct cmd*) 0 ;
+	struct macro *macro_first = (struct macro*) 0 ;
 	struct register_list empty_list ;
 	unsigned int regs_used ;
 	unsigned int *regs ;
@@ -92,18 +94,21 @@ LOOP_FILE:
 ;
 
 MACRODEFS:
-	/* empty */ { $$ = (struct macro*) 0 ; }
+	/* empty */ { $$ = macro_first ; }
 	| MACRODEF MACRODEFS {
 		$1->next = $2 ;
 		$$ = $1 ;
+		
 	}
 ;
+
 MACRODEF:
 	MACRONAME LPAREN REGISTERLIST RPAREN LBRACE LOOP_PROG RBRACE {
 		$$ = _CALLOC(struct macro,1) ;
 		$$->name = $1 ;
 		$$->reglist = $3 ;
 		$$->macrocode = $6 ;
+		$$->next = (struct macro*) 0 ;
 	}
 ;
 
@@ -157,12 +162,10 @@ LOOP_PROG:
 		$$->reglist = $3 ;
 		struct macro *m = find_loop_macro($1) ;
 		if (m == (struct macro*) 0) {
-			yyerror("Unknown macro name") ;
+			yyerror("Unknown macro name found") ;
 			YYERROR ;
 		}
-		if ($3 == &empty_list) {
-			    $$->loop = m->macrocode ;
-		}
+		$$->macro = m ;
 	}
 ;
 
@@ -181,16 +184,17 @@ void prepare() {
 struct macro* find_loop_macro(const char* name) {
 	struct macro* m = macro_first  ;
 	struct macro* res = (struct macro*) 0;
-	do {
+	while (m) {
 		if(strcmp (m->name, name) == 0) 
 			res = m ;
 		m = m->next ;
-	} while (m) ;
+	} 
 	return res ;
 }
 
 void run(struct cmd* p) {
 	unsigned int cnt ;
+	struct macro* m ;
 	do {
 		switch(p->op) {
 			case OP_ADD:
@@ -205,6 +209,11 @@ void run(struct cmd* p) {
 					run(p->loop) ;
 			break ;
 			case OP_NOP:
+			break;
+			case OP_MACRO:
+				if (p->macro->reglist != &empty_list) {
+				}
+				run(p->loop) ;
 			break;
 		}
 		p = p->next ;
@@ -246,10 +255,10 @@ int main(int argc, char **argv) {
 
 	yyparse() ;
 
-	prepare() ;
-	run(cmd_first) ;
-	dump_registers() ;
-	teardown() ;
+//	prepare() ;
+//	run(cmd_first) ;
+//	dump_registers() ;
+//	teardown() ;
 
 }
 

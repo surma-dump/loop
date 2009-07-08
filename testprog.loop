@@ -1,4 +1,3 @@
-Stupid (r0,r1) { LOOP r1 { ADD r0 2 } }
-BLA (r0) { ADD r0 1 }
-BLUPP () { SUB r1231222 1 }
-ADD r1 1
+BLUPP () { SUB r1 1 }
+ADD r1 6 ;
+BLUPP () ;

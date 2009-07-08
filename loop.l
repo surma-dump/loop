@@ -1,6 +1,8 @@
 %{
 	#include <stdlib.h>
+	#include <string.h>
 	#include "loop.tab.h"
+
 %}
 
 
@@ -15,7 +17,11 @@ ALPHA		[_a-zA-Z]
 "ADD"		{ return ADD_STMNT; }
 "SUB"		{ return SUB_STMNT; }
 {DIGIT}+	{ yylval.numeric_val = atoi (yytext); return CONSTANT; }
-{ALPHA}{ALPHANUM}* { yylval.string = yytext; return MACRONAME; }
+{ALPHA}{ALPHANUM}* { 
+		yylval.string = (char*) calloc (strlen(yytext), sizeof(char)) ;
+		strcpy(yylval.string, yytext); 
+		return MACRONAME; 
+		}
 "{"		{ return LBRACE; }
 "}"		{ return RBRACE; }
 "("		{ return LPAREN; }
