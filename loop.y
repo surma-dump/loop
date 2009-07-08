@@ -109,6 +109,11 @@ MACRODEF:
 
 REGISTERLIST: 
 	/* empty */ { $$ = &empty_list }
+	| REGISTER {
+		$$ = _CALLOC(struct register_list,1) ;
+		$$->reg = $1 ;
+		$$->next = (struct register_list*) 0 ;
+	}
 	| REGISTER COMMA REGISTERLIST {
 		$$ = _CALLOC(struct register_list,1) ;
 		$$->reg = $1 ;
@@ -241,10 +246,10 @@ int main(int argc, char **argv) {
 
 	yyparse() ;
 
-//	prepare() ;
-//	run(cmd_first) ;
-//	dump_registers() ;
-//	teardown() ;
+	prepare() ;
+	run(cmd_first) ;
+	dump_registers() ;
+	teardown() ;
 
 }
 
