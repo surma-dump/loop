@@ -186,9 +186,30 @@ struct macro* find_loop_macro(const char* name) {
 	return res ;
 }
 
+struct cmd* copy_cmd (struct cmd* p) {
+	struct cmd* cpy, cur, last ;
+	int first = 1 ;
+	while (p) {
+		if (first) {
+			cpy = last = cur = _CALLOC(struct cmd,1) ;
+			first =!first ;
+			memcpy (cur,p,sizeof(struct cmd)) ;
+		}
+		else {
+			cur = _CALLOC(struct cmd,1) ;
+			memcpy (cur,p,sizeof(struct cmd)) ;
+			last->next = cur ;
+			last = cur ;
+		}
+		p = p->next ;	
+	}
+	return cpy ;
+}
+
 void run(struct cmd* p) {
 	unsigned int cnt ;
 	struct macro* m ;
+	struct cmd* cpy ;
 	do {
 		switch(p->op) {
 			case OP_ADD:
@@ -211,11 +232,10 @@ void run(struct cmd* p) {
 					fprintf(stderr,"Unknown macro \"%s\"\n", p->macro) ;
 					exit(1) ;
 				}
-				if (m->reglist != &empty_list) {
-				}
-				else {
-					run(m->macrocode) ;
-				}
+				
+				cpy = copy_cmd (m->macrocode) ;	
+				// FIXME
+				free (cpy) ;
 			break;
 		}
 		p = p->next ;
