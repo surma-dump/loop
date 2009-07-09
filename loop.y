@@ -187,11 +187,11 @@ struct macro* find_loop_macro(const char* name) {
 }
 
 struct cmd* copy_cmd (struct cmd* p) {
-	struct cmd* cpy, cur, last ;
+	struct cmd* cpy, *cur, *last ;
 	int first = 1 ;
 	while (p) {
 		if (first) {
-			cpy = last = cur = _CALLOC(struct cmd,1) ;
+			cpy = (last = (cur = _CALLOC(struct cmd,1))) ;
 			first =!first ;
 			memcpy (cur,p,sizeof(struct cmd)) ;
 		}
@@ -204,6 +204,28 @@ struct cmd* copy_cmd (struct cmd* p) {
 		p = p->next ;	
 	}
 	return cpy ;
+}
+
+void replace_registers (struct register_list* replace_anchor, struct register_list* with_anchor, struct cmd* c) {
+	int count = -1, found, i ;
+	struct register_list* replace, *with ;
+	while (c) {
+		replace = replace_anchor ;
+		with = with_anchor ;
+		found = 0 ;
+		while(!found && replace && replace != &empty_list ) {
+			count ++ ;	
+			if (c->op != OP_MACRO && c->op != OP_NOP) 
+				found = (replace->reg == c->reg) ;
+			replace = replace->next ;
+		}
+		if (found) {
+			for(i = 0; (i < count) && with; i++) 
+				with = with->next ;
+			c->reg = with->reg ;
+		}
+		c = c->next ;
+	}
 }
 
 void run(struct cmd* p) {
@@ -234,7 +256,8 @@ void run(struct cmd* p) {
 				}
 				
 				cpy = copy_cmd (m->macrocode) ;	
-				// FIXME
+				replace_registers (m->reglist, p->reglist, cpy) ;
+				run(cpy) ;
 				free (cpy) ;
 			break;
 		}

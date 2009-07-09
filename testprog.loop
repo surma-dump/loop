@@ -1,14 +1,12 @@
-BLUPP() { 
-	LOOP r1 {
-		LOOP r2 {
-			ADD r0 1 ;
-		};
-	};
+CLR(r0) { # Set r0 to zero
+	LOOP r0 { SUB r0 1; }
 }
-BLUPP2() {
-	ADD r1 1 ;
-	BLUPP() ;
+
+MOV(r0, r1) { # Copy value of r1 to r0
+	CLR(r0) ;
+	LOOP r1 { ADD r0 1; }
 }
-ADD r1 4 ;
-ADD r2 12 ;
-BLUPP2() ;
+
+CLR(r10) ;
+#ADD r10 23 ;
+#MOV(r2,r10) ;
