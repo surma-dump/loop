@@ -24,7 +24,7 @@
 		union {
 			struct cmd *loop ;
 			unsigned int param ;
-			struct macro* macro ;
+			char *macro ;
 		} ;
 		struct cmd *next ;
 	} ;
@@ -94,7 +94,7 @@ LOOP_FILE:
 ;
 
 MACRODEFS:
-	/* empty */ { $$ = macro_first ; }
+	/* empty */ { $$ = (struct macro*) 0 ; }
 	| MACRODEF MACRODEFS {
 		$1->next = $2 ;
 		$$ = $1 ;
@@ -108,7 +108,6 @@ MACRODEF:
 		$$->name = $1 ;
 		$$->reglist = $3 ;
 		$$->macrocode = $6 ;
-		$$->next = (struct macro*) 0 ;
 	}
 ;
 
@@ -160,12 +159,7 @@ LOOP_PROG:
 		$$ = _CALLOC(struct cmd,1);
 		$$->op = OP_MACRO ;
 		$$->reglist = $3 ;
-		struct macro *m = find_loop_macro($1) ;
-		if (m == (struct macro*) 0) {
-			yyerror("Unknown macro name found") ;
-			YYERROR ;
-		}
-		$$->macro = m ;
+		$$->macro = $1 ;
 	}
 ;
 
@@ -211,9 +205,17 @@ void run(struct cmd* p) {
 			case OP_NOP:
 			break;
 			case OP_MACRO:
-				if (p->macro->reglist != &empty_list) {
+				m = find_loop_macro(p->macro) ;
+
+				if(!m) {
+					fprintf(stderr,"Unknown macro \"%s\"\n", p->macro) ;
+					exit(1) ;
 				}
-				run(p->loop) ;
+				if (m->reglist != &empty_list) {
+				}
+				else {
+					run(m->macrocode) ;
+				}
 			break;
 		}
 		p = p->next ;
@@ -255,10 +257,10 @@ int main(int argc, char **argv) {
 
 	yyparse() ;
 
-//	prepare() ;
-//	run(cmd_first) ;
-//	dump_registers() ;
-//	teardown() ;
+	prepare() ;
+	run(cmd_first) ;
+	dump_registers() ;
+	teardown() ;
 
 }
 
