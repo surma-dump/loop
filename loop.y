@@ -232,7 +232,7 @@ void run(struct cmd* p) {
 	unsigned int cnt ;
 	struct macro* m ;
 	struct cmd* cpy ;
-	do {
+	while (p) {
 		switch(p->op) {
 			case OP_ADD:
 				regs[p->reg] += p->param ;
@@ -254,7 +254,7 @@ void run(struct cmd* p) {
 					fprintf(stderr,"Unknown macro \"%s\"\n", p->macro) ;
 					exit(1) ;
 				}
-				
+
 				cpy = copy_cmd (m->macrocode) ;	
 				replace_registers (m->reglist, p->reglist, cpy) ;
 				run(cpy) ;
@@ -262,7 +262,7 @@ void run(struct cmd* p) {
 			break;
 		}
 		p = p->next ;
-	} while (p) ;
+	} 
 }
 
 void dump_registers() {
