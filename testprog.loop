@@ -1,6 +1,0 @@
-CLR(r0) { 
-	LOOP r0 { SUB r0 1 ; } ;
-}
-
-ADD r10 2 ;
-CLR(r10) ;
